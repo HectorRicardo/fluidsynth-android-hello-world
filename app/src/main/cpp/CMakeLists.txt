@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.4.1)
 # Create a variable fluidsynth_DIR to specify where the fluidsynth library is located.
 set(fluidsynth_DIR ${CMAKE_CURRENT_SOURCE_DIR}/fluidsynth)
 
-# Our code (native-lib.cpp) will be calling fluidsynth functions, so we add the fluidsynth binaries as dependencies of our code.
+# Our code (fluidsynth_wrapper.c) will be calling fluidsynth functions, so we add the fluidsynth binaries as dependencies of our code.
 
 add_library(libc++_shared SHARED IMPORTED)
 set_target_properties(libc++_shared PROPERTIES IMPORTED_LOCATION ${fluidsynth_DIR}/lib/${ANDROID_ABI}/libc++_shared.so)
@@ -73,14 +73,14 @@ add_library(preloadable_libiconv SHARED IMPORTED)
 set_target_properties(preloadable_libiconv PROPERTIES IMPORTED_LOCATION ${fluidsynth_DIR}/lib/${ANDROID_ABI}/preloadable_libiconv.so)
 
 # Library that will be called directly from JAVA
-add_library(native-lib SHARED native-lib.cpp)
+add_library(fluidsynth_wrapper SHARED fluidsynth_wrapper.c)
 
 # Specifies the directory where the C or C++ source coude will look the #include <yourlibrary.h> header files
-target_include_directories(native-lib PRIVATE ${fluidsynth_DIR}/include)
+target_include_directories(fluidsynth_wrapper PRIVATE ${fluidsynth_DIR}/include)
 
-# Link everything alltogether. Notice that native-lib should be the first element in the list.
+# Link everything alltogether. Notice that fluidsynth_wrapper should be the first element in the list.
 target_link_libraries(
-        native-lib
+        fluidsynth_wrapper
         libc++_shared
         libcharset
         libffi

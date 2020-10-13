@@ -1,51 +1,78 @@
 package com.example.fluidsynthandroidhelloworld;
 
+import android.os.Bundle;
+import android.view.View;
+
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.Context;
-import android.os.Bundle;
-
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import static com.example.fluidsynthandroidhelloworld.Fluidsynth.synthesizer;
 
 public class MainActivity extends AppCompatActivity {
 
-    // Used to load the 'native-lib' library on application startup.
-    static {
-        System.loadLibrary("native-lib");
-    }
+    private boolean playing = false;
+
+    private final Runnable melodyRunnable = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                synthesizer.noteOn(60);
+                synthesizer.noteOn(64);
+                synthesizer.noteOn(67);
+                Thread.sleep(500);
+                synthesizer.noteOff(60);
+                synthesizer.noteOff(64);
+                synthesizer.noteOff(67);
+
+                synthesizer.noteOn(62);
+                synthesizer.noteOn(65);
+                synthesizer.noteOn(69);
+                Thread.sleep(500);
+                synthesizer.noteOff(62);
+                synthesizer.noteOff(65);
+                synthesizer.noteOff(69);
+
+                synthesizer.noteOn(64);
+                synthesizer.noteOn(67);
+                synthesizer.noteOn(71);
+                Thread.sleep(500);
+                synthesizer.noteOff(64);
+                synthesizer.noteOff(67);
+                synthesizer.noteOff(71);
+
+            } catch (InterruptedException ignored) {
+            } finally {
+                playing = false;
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        try {
-            String tempSoundfontPath = copyAssetToTmpFile("sndfnt.sf2");
-            fluidsynthHelloWorld(tempSoundfontPath);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        synthesizer.open("sndfnt.sf2", this);
+
+        synthesizer.programChange(0);
+        synthesizer.controlChange(65, 127);
+        synthesizer.controlChange(5, 1);
+
+        play();
     }
 
-    private String copyAssetToTmpFile(String fileName) throws IOException {
-        try (InputStream is = getAssets().open(fileName)) {
-            String tempFileName = "tmp_" + fileName;
-            try (FileOutputStream fos = openFileOutput(tempFileName, Context.MODE_PRIVATE)) {
-                int bytes_read;
-                byte[] buffer = new byte[4096];
-                while ((bytes_read = is.read(buffer)) != -1) {
-                    fos.write(buffer, 0, bytes_read);
-                }
-            }
-            return getFilesDir() + "/" + tempFileName;
-        }
+    public void play(View view) {
+        play();
     }
 
-    /**
-     * A native method that is implemented by the 'native-lib' native library,
-     * which is packaged with this application.
-     */
-    public native void fluidsynthHelloWorld(String soundfontPath);
+    public void play() {
+        if (playing) return;
+        playing = true;
+        new Thread(melodyRunnable).start();
+    }
+
+    @Override
+    protected void onDestroy() {
+        synthesizer.close();
+        super.onDestroy();
+    }
 }
